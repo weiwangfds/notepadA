@@ -16,6 +16,7 @@ export function useEditor() {
   const [error, setError] = useState<string | null>(null);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [showGotoDialog, setShowGotoDialog] = useState(false);
 
   // Throttle viewport requests
   const pendingRequest = useRef<number | null>(null);
@@ -220,13 +221,7 @@ export function useEditor() {
       // Cmd/Ctrl + G: Go to line
       if ((e.metaKey || e.ctrlKey) && e.key === "g") {
         e.preventDefault();
-        const lineStr = prompt("Go to line:");
-        if (lineStr) {
-          const line = parseInt(lineStr, 10);
-          if (!isNaN(line)) {
-            handleGotoLine(line - 1); // Convert 1-based to 0-based
-          }
-        }
+        setShowGotoDialog(true);
       }
       // Cmd/Ctrl + W: Close tab
       if ((e.metaKey || e.ctrlKey) && e.key === "w") {
@@ -271,6 +266,8 @@ export function useEditor() {
     error,
     canUndo,
     canRedo,
+    showGotoDialog,
+    closeGotoDialog: () => setShowGotoDialog(false),
     openFile,
     closeTab,
     switchTab,

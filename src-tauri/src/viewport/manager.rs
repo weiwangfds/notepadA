@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::buffer::line_index::LineIndex;
 use crate::file::encoding::{EncodingInfo, LineEnding};
 
@@ -31,8 +33,8 @@ pub struct ViewportData {
 /// In Phase 2, the PieceTable lives in Document and the text bytes are passed
 /// to each method. This avoids lifetime issues with borrowing across structs.
 pub struct ViewportManager {
-    /// The line index for this document.
-    line_index: LineIndex,
+    /// The line index for this document (shared for background indexing).
+    line_index: Arc<LineIndex>,
     /// Encoding info.
     encoding_info: EncodingInfo,
     /// File size in bytes.
@@ -46,7 +48,7 @@ pub struct ViewportManager {
 impl ViewportManager {
     /// Create a new viewport manager from pre-built components.
     pub fn new(
-        line_index: LineIndex,
+        line_index: Arc<LineIndex>,
         encoding_info: EncodingInfo,
         file_size: u64,
         file_name: String,
@@ -54,6 +56,7 @@ impl ViewportManager {
     ) -> Self {
         Self {
             line_index,
+
             encoding_info,
             file_size,
             file_name,
@@ -89,8 +92,9 @@ impl ViewportManager {
     /// Rebuild the line index from the given text bytes.
     /// Called after edits to keep the line index in sync.
     pub fn rebuild_line_index(&mut self, text_bytes: &[u8]) {
-        self.line_index = LineIndex::new(text_bytes, text_bytes.len() as u64);
-        self.line_index.build_full(text_bytes);
+        let mut new_index = LineIndex::new(text_bytes, text_bytes.len() as u64);
+        new_index.build_full(text_bytes);
+        self.line_index = Arc::new(new_index);
     }
 
     /// Get the total line count.

@@ -4,6 +4,7 @@ import MenuBar from "./components/MenuBar/MenuBar";
 import TabBar from "./components/TabBar/TabBar";
 import EditorView from "./components/Editor/EditorView";
 import StatusBar from "./components/StatusBar/StatusBar";
+import GotoLineDialog from "./components/Dialogs/GotoLineDialog";
 
 function App() {
   const {
@@ -13,11 +14,14 @@ function App() {
     cursor,
     loading,
     error,
+    showGotoDialog,
+    closeGotoDialog,
     openFile,
     closeTab,
     switchTab,
     requestViewport,
     setCursor,
+    handleGotoLine,
     handleInsertText,
     handleDeleteRange,
     handleSave,
@@ -27,7 +31,6 @@ function App() {
   } = useEditor();
 
   // Auto-open file if specified in URL hash (e.g., #file=/tmp/test.txt)
-  // This allows GUI testing by launching with a specific file.
   const autoOpenDone = useRef(false);
   useEffect(() => {
     if (autoOpenDone.current) return;
@@ -93,6 +96,14 @@ function App() {
       </div>
 
       <StatusBar viewport={viewport} cursor={cursor} loading={loading} />
+
+      {showGotoDialog && viewport && (
+        <GotoLineDialog
+          totalLines={viewport.total_lines}
+          onGoto={handleGotoLine}
+          onClose={closeGotoDialog}
+        />
+      )}
     </div>
   );
 }

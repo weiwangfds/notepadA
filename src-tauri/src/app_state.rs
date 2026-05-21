@@ -80,14 +80,18 @@ impl AppState {
         let bom_len = detect_bom_len(raw_bytes);
 
         // Convert to UTF-8
-        let utf8_text = convert_to_utf8(raw_bytes, &encoding_info.encoding, bom_len);
+        let utf8_bytes = convert_to_utf8(raw_bytes, &encoding_info.encoding, bom_len).into_bytes();
+        let content = Arc::new(utf8_bytes);
 
-        // Build line index
-        let mut line_index = LineIndex::new(utf8_text.as_bytes(), utf8_text.len() as u64);
-        line_index.build_full(utf8_text.as_bytes());
+        // Build line index: initial scan first, then background for large files
+        let line_index = LineIndex::new(&content, content.len() as u64);
+        let line_index = Arc::new(line_index);
+        if !line_index.is_complete() {
+            line_index.build_background(Arc::clone(&content), None);
+        }
 
         // Create piece table with the UTF-8 content
-        let piece_table = PieceTable::new(utf8_text.into_bytes());
+        let piece_table = PieceTable::new((*content).clone());
 
         // Create viewport manager
         let viewport = ViewportManager::new(
