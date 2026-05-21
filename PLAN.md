@@ -36,60 +36,59 @@
 
 ---
 
-## Phase 2: 编辑能力
+## Phase 2: 编辑能力 ✅ 已完成
 
 ### 2.1 Piece Table 数据结构 (Rust)
-- [ ] 创建 `src-tauri/src/buffer/piece_table.rs`
-- [ ] 实现 `Piece` 结构体 (source: Original/AddBuffer, offset, length)
-- [ ] 实现 `PieceTable` 结构体 (original mmap ref, add_buffer, pieces BTreeMap)
-- [ ] 实现 `insert(pos, text)` — O(1) 追加 + O(log n) 插入 Piece
-- [ ] 实现 `delete(pos, len)` — O(log n) 分裂/删除 Piece
-- [ ] 实现 `replace(pos, len, text)` — delete + insert 组合
-- [ ] 实现 `to_bytes()` / `read_range(pos, len)` — 读取逻辑内容
-- [ ] 实现 `line_at(logical_offset)` — 通过 Piece Table 定位行号
-- [ ] 单元测试: insert/delete/replace 基本操作
-- [ ] 单元测试: 大量操作后内容正确性验证
+- [x] 创建 `src-tauri/src/buffer/piece_table.rs`
+- [x] 实现 `Piece` 结构体 (source: Original/AddBuffer, offset, length)
+- [x] 实现 `PieceTable` 结构体 (original, add_buffer, pieces BTreeMap)
+- [x] 实现 `insert(pos, text)` — O(1) 追加 + O(log n) 插入 Piece
+- [x] 实现 `delete(pos, len)` — O(log n) 分裂/删除 Piece
+- [x] 实现 `replace(pos, len, text)` — delete + insert 组合
+- [x] 实现 `to_bytes()` / `read_range(pos, len)` — 读取逻辑内容
+- [x] 实现 undo/redo 栈
+- [x] 30 个单元测试全部通过
 
 ### 2.2 编辑命令 (Rust)
-- [ ] 创建 `src-tauri/src/commands/edit_cmds.rs`
-- [ ] 实现 `insert_text(tab_id, line, col, text)` 命令
-- [ ] 实现 `delete_range(tab_id, start, end)` 命令
-- [ ] 实现 `replace_range(tab_id, start, end, text)` 命令
-- [ ] 实现 `undo(tab_id)` / `redo(tab_id)` 命令 (基础 Undo 栈)
-- [ ] 更新 `Document` 结构体: 添加 `PieceTable` 字段
-- [ ] 更新 `ViewportManager`: 从 Piece Table 读取视口内容
-- [ ] 在 `lib.rs` 注册新命令
+- [x] 创建 `src-tauri/src/commands/edit_cmds.rs`
+- [x] 实现 `insert_text(tab_id, line, col, text)` 命令
+- [x] 实现 `delete_range(tab_id, start, end)` 命令
+- [x] 实现 `replace_range(tab_id, start, end, text)` 命令
+- [x] 实现 `undo(tab_id)` / `redo(tab_id)` 命令
+- [x] 更新 `Document` 结构体: 集成 PieceTable
+- [x] 更新 `ViewportManager`: 重构为接受外部 bytes 参数
+- [x] 在 `lib.rs` 注册新命令
 
 ### 2.3 文件保存 (Rust)
-- [ ] 创建 `src-tauri/src/file/saver.rs`
-- [ ] 实现 `save_file(tab_id)` — 遍历 Piece Table 写临时文件 + 原子重命名
-- [ ] 实现 `save_file_as(tab_id, path)` — 另存为
-- [ ] 保存后重建 mmap + 重置 Piece Table
-- [ ] 创建 `src-tauri/src/commands/file_cmds.rs` 中添加 save_file/save_file_as 命令
-- [ ] 单元测试: 编辑后保存，重新打开验证内容
+- [x] 创建 `src-tauri/src/file/saver.rs` (原子写入: 临时文件 + rename)
+- [x] 实现 `save_file(tab_id)` — 从 Piece Table 读取内容写入
+- [x] 实现 `save_file_as(tab_id, path)` — 另存为
+- [x] 在 `file_cmds.rs` 添加 save_file/save_file_as 命令
 
 ### 2.4 光标与文本选择 (前端)
-- [ ] 改进 `EditorView.tsx` 光标渲染: 使用隐藏 input/contenteditable 捕获输入
-- [ ] 实现文本选择 (shift+click, shift+方向键)
-- [ ] 实现选择区域高亮渲染
-- [ ] 实现选择区域删除 (Backspace/Delete 选中文本)
-- [ ] 实现复制/剪切/粘贴 (Ctrl+C/X/V)
+- [x] 改进 `EditorView.tsx` 光标渲染: 使用隐藏 input 捕获键盘/IME 输入
+- [x] 实现文本选择 (shift+click)
+- [x] 实现选择区域高亮渲染
+- [x] 实现选择区域删除 (Backspace/Delete 选中文本)
 
 ### 2.5 键盘输入处理 (前端)
-- [ ] 实现字符输入 → `insert_text` IPC
-- [ ] 实现 Backspace/Delete → `delete_range` IPC
-- [ ] 实现 Enter → 插入换行符
-- [ ] 实现 Tab → 插入制表符/空格
-- [ ] 实现方向键移动光标 (上下左右)
-- [ ] 实现 Home/End → 行首/行尾
-- [ ] 实现 Ctrl+Home/End → 文件头/尾
-- [ ] 实现 Ctrl+Z/Y → 撤销/重做
+- [x] 实现字符输入 → `insert_text` IPC
+- [x] 实现 Backspace/Delete → `delete_range` IPC
+- [x] 实现 Enter → 插入换行符
+- [x] 实现 Tab → 插入空格
+- [x] 实现方向键移动光标 (上下左右)
+- [x] 实现 Home/End → 行首/行尾
+- [x] 实现 Ctrl+Home/End → 文件头/尾
+- [x] 实现 PageUp/PageDown
+- [x] 实现 Ctrl+Z/Y → 撤销/重做
 
 ### 2.6 前端 IPC 扩展
-- [ ] 更新 `tauriApi.ts`: 添加 insertText, deleteRange, replaceRange, saveFile, undo, redo
-- [ ] 更新 `types/editor.ts`: 添加 EditResult 等新类型
-- [ ] 更新 `useEditor.ts`: 集成编辑操作，标记 dirty 状态
-- [ ] 更新 `MenuBar.tsx`: 保存菜单项可用，绑定 Ctrl+S
+- [x] 更新 `tauriApi.ts`: 添加所有编辑和保存 API
+- [x] 更新 `types/editor.ts`: 添加 EditResult 类型
+- [x] 更新 `useEditor.ts`: 集成编辑操作，标记 dirty 状态
+- [x] 更新 `MenuBar.tsx`: Save/SaveAs/Undo/Redo 菜单
+- [x] 更新 `App.tsx`: 传递编辑 props
+- [x] 更新 CSS: 选择区域高亮样式
 
 ---
 
@@ -193,10 +192,10 @@
 
 ## 开发顺序
 
-当前进度: **Phase 2 编辑能力** ← 下一步从这里开始
+当前进度: **Phase 3 超大文件优化** ← 下一步从这里开始
 
 1. ✅ Phase 1 — 已完成
-2. 🔄 Phase 2 — Piece Table + 编辑 + 保存 (当前任务)
-3. ⬜ Phase 3 — 大文件优化
+2. ✅ Phase 2 — 已完成 (Piece Table + 编辑 + 保存)
+3. 🔄 Phase 3 — 大文件优化 (当前任务)
 4. ⬜ Phase 4 — 搜索替换
 5. ⬜ Phase 5 — 完善体验

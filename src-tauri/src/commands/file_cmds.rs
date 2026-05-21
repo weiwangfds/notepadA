@@ -5,6 +5,7 @@ use tauri::State;
 
 use crate::app_state::AppState;
 use crate::app_state::TabInfo;
+use crate::file::saver;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct OpenFileResult {
@@ -31,7 +32,8 @@ pub fn open_file(path: String, state: State<'_, AppState>) -> Result<OpenFileRes
     let d = doc.read();
 
     // Get initial viewport to return encoding info
-    let vp = d.viewport.get_viewport(0, 1);
+    let bytes = d.content_bytes();
+    let vp = d.viewport.get_viewport(&bytes, 0, 1);
 
     Ok(OpenFileResult {
         tab_id,
@@ -53,4 +55,41 @@ pub fn close_file(tab_id: String, state: State<'_, AppState>) -> Result<(), Stri
 #[tauri::command]
 pub fn get_tabs(state: State<'_, AppState>) -> Vec<TabInfo> {
     state.get_tabs()
+}
+
+#[tauri::command]
+pub fn save_file(tab_id: String, state: State<'_, AppState>) -> Result<(), String> {
+    let doc = state.get_doc(&tab_id)?;
+    let mut d = doc.write();
+
+    if !d.dirty {
+        return Ok(()); // Nothing to save
+    }
+
+    let content = d.content_bytes();
+    let path = d.path.clone();
+
+    saver::save_atomic(&path, &content)?;
+
+    // Reset dirty flag
+    d.dirty = false;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn save_file_as(tab_id: String, path: String, state: State<'_, AppState>) -> Result<(), String> {
+    let doc = state.get_doc(&tab_id)?;
+    let mut d = doc.write();
+
+    let content = d.content_bytes();
+    let new_path = PathBuf::from(&path);
+
+    saver::save_atomic(&new_path, &content)?;
+
+    // Update document path and reset dirty
+    d.path = new_path;
+    d.dirty = false;
+
+    Ok(())
 }

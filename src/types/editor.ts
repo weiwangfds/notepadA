@@ -46,6 +46,16 @@ export interface CursorPosition {
   column: number;
 }
 
+/** Result from an edit operation */
+export interface EditResult {
+  viewport: ViewportData;
+  cursor_line: number;
+  cursor_col: number;
+  dirty: boolean;
+  can_undo: boolean;
+  can_redo: boolean;
+}
+
 /** Format byte size to human-readable string */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";

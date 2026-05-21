@@ -26,9 +26,16 @@ pub fn run() {
             commands::file_cmds::open_file,
             commands::file_cmds::close_file,
             commands::file_cmds::get_tabs,
+            commands::file_cmds::save_file,
+            commands::file_cmds::save_file_as,
             commands::viewport_cmds::get_viewport,
             commands::viewport_cmds::goto_line,
             commands::viewport_cmds::get_line_count,
+            commands::edit_cmds::insert_text,
+            commands::edit_cmds::delete_range,
+            commands::edit_cmds::replace_range,
+            commands::edit_cmds::undo,
+            commands::edit_cmds::redo,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

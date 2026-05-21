@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import * as api from "../services/tauriApi";
-import type { ViewportData, TabInfo, CursorPosition } from "../types/editor";
+import type { ViewportData, TabInfo, CursorPosition, EditResult } from "../types/editor";
 
 /** Number of visible lines in the viewport */
 const VIEWPORT_LINES = 80;
@@ -14,6 +14,8 @@ export function useEditor() {
   const [cursor, setCursor] = useState<CursorPosition>({ line: 0, column: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
   // Throttle viewport requests
   const pendingRequest = useRef<number | null>(null);
@@ -69,6 +71,8 @@ export function useEditor() {
       await refreshTabs();
       await loadViewport(result.tab_id, 0);
       setCursor({ line: 0, column: 0 });
+      setCanUndo(false);
+      setCanRedo(false);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -109,7 +113,103 @@ export function useEditor() {
     setCursor({ line: clamped, column: 0 });
   }, [activeTabId, loadViewport]);
 
-  // Keyboard shortcuts
+  // ─── Edit operations ──────────────────────────────────────
+
+  const applyEditResult = useCallback((result: EditResult) => {
+    setViewport(result.viewport);
+    setCursor({ line: result.cursor_line, column: result.cursor_col });
+    setCanUndo(result.can_undo);
+    setCanRedo(result.can_redo);
+    // Update tab dirty state
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.id === activeTabId ? { ...t, dirty: result.dirty } : t
+      )
+    );
+  }, [activeTabId]);
+
+  const handleInsertText = useCallback(async (line: number, col: number, text: string) => {
+    if (!activeTabId) return;
+    try {
+      const result = await api.insertText(activeTabId, line, col, text);
+      applyEditResult(result);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, applyEditResult]);
+
+  const handleDeleteRange = useCallback(async (startLine: number, startCol: number, endLine: number, endCol: number) => {
+    if (!activeTabId) return;
+    try {
+      const result = await api.deleteRange(activeTabId, startLine, startCol, endLine, endCol);
+      applyEditResult(result);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, applyEditResult]);
+
+  const handleReplaceRange = useCallback(async (startLine: number, startCol: number, endLine: number, endCol: number, text: string) => {
+    if (!activeTabId) return;
+    try {
+      const result = await api.replaceRange(activeTabId, startLine, startCol, endLine, endCol, text);
+      applyEditResult(result);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, applyEditResult]);
+
+  const handleUndo = useCallback(async () => {
+    if (!activeTabId) return;
+    try {
+      const result = await api.undoEdit(activeTabId, cursor.line);
+      applyEditResult(result);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, cursor.line, applyEditResult]);
+
+  const handleRedo = useCallback(async () => {
+    if (!activeTabId) return;
+    try {
+      const result = await api.redoEdit(activeTabId, cursor.line);
+      applyEditResult(result);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, cursor.line, applyEditResult]);
+
+  const handleSave = useCallback(async () => {
+    if (!activeTabId) return;
+    try {
+      await api.saveFile(activeTabId);
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.id === activeTabId ? { ...t, dirty: false } : t
+        )
+      );
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId]);
+
+  const handleSaveAs = useCallback(async () => {
+    if (!activeTabId) return;
+    try {
+      const path = await api.showSaveFileDialog();
+      if (!path) return;
+      await api.saveFileAs(activeTabId, path);
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.id === activeTabId ? { ...t, dirty: false } : t
+        )
+      );
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId]);
+
+  // ─── Keyboard shortcuts ───────────────────────────────────
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Cmd/Ctrl + O: Open file
@@ -135,11 +235,32 @@ export function useEditor() {
           closeTab(activeTabId);
         }
       }
+      // Cmd/Ctrl + S: Save
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+      // Cmd/Ctrl + Shift + S: Save As
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "S") {
+        e.preventDefault();
+        handleSaveAs();
+      }
+      // Cmd/Ctrl + Z: Undo
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        handleUndo();
+      }
+      // Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y: Redo
+      if (((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "Z") ||
+          ((e.metaKey || e.ctrlKey) && e.key === "y")) {
+        e.preventDefault();
+        handleRedo();
+      }
     };
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [openFile, handleGotoLine, closeTab, activeTabId]);
+  }, [openFile, handleGotoLine, closeTab, handleSave, handleSaveAs, handleUndo, handleRedo, activeTabId]);
 
   return {
     activeTabId,
@@ -148,11 +269,20 @@ export function useEditor() {
     cursor,
     loading,
     error,
+    canUndo,
+    canRedo,
     openFile,
     closeTab,
     switchTab,
     requestViewport,
     handleGotoLine,
     setCursor,
+    handleInsertText,
+    handleDeleteRange,
+    handleReplaceRange,
+    handleUndo,
+    handleRedo,
+    handleSave,
+    handleSaveAs,
   };
 }

@@ -46,6 +46,14 @@
   background: var(--menubar-hover);
 }
 
+.menubar-separator {
+  width: 1px;
+  height: 16px;
+  background: var(--border-color);
+  padding: 0;
+  cursor: default;
+}
+
 .menubar-item-disabled {
   opacity: 0.4;
   pointer-events: none;
@@ -167,6 +175,10 @@
 
 .editor-line-active {
   background: var(--line-active);
+}
+
+.editor-line-selected {
+  background: var(--selection-bg);
 }
 
 .editor-line-text {

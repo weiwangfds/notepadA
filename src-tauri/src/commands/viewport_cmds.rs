@@ -21,7 +21,8 @@ pub fn get_viewport(
 ) -> Result<ViewportData, String> {
     let doc = state.get_doc(&tab_id)?;
     let d = doc.read();
-    Ok(d.viewport.get_viewport(start_line, line_count))
+    let bytes = d.content_bytes();
+    Ok(d.viewport.get_viewport(&bytes, start_line, line_count))
 }
 
 #[tauri::command]
@@ -32,18 +33,21 @@ pub fn goto_line(
 ) -> Result<ViewportData, String> {
     let doc = state.get_doc(&tab_id)?;
     let d = doc.read();
-    Ok(d.viewport.get_viewport(line, 50))
+    let bytes = d.content_bytes();
+    Ok(d.viewport.get_viewport(&bytes, line, 50))
 }
 
 #[tauri::command]
 pub fn get_line_count(tab_id: String, state: State<'_, AppState>) -> Result<LineCountInfo, String> {
     let doc = state.get_doc(&tab_id)?;
     let d = doc.read();
+    let bytes = d.content_bytes();
+    let vp = d.viewport.get_viewport(&bytes, 0, 0);
     Ok(LineCountInfo {
         total_lines: d.viewport.total_lines(),
         file_size: d.viewport.file_size(),
-        index_progress: d.viewport.get_viewport(0, 0).index_progress,
-        index_complete: d.viewport.get_viewport(0, 0).index_complete,
+        index_progress: vp.index_progress,
+        index_complete: vp.index_complete,
     })
 }
 

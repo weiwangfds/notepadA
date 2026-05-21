@@ -1,5 +1,5 @@
 use crate::buffer::line_index::LineIndex;
-use crate::file::encoding::{convert_to_utf8, detect, EncodingInfo, LineEnding};
+use crate::file::encoding::{EncodingInfo, LineEnding};
 
 /// Result of a viewport request.
 #[derive(Debug, Clone, serde::Serialize)]
@@ -27,6 +27,9 @@ pub struct ViewportData {
 }
 
 /// Manages the viewport for a single open document.
+///
+/// In Phase 2, the PieceTable lives in Document and the text bytes are passed
+/// to each method. This avoids lifetime issues with borrowing across structs.
 pub struct ViewportManager {
     /// The line index for this document.
     line_index: LineIndex,
@@ -36,54 +39,32 @@ pub struct ViewportManager {
     file_size: u64,
     /// File name for display.
     file_name: String,
-    /// The converted UTF-8 text (only for small files that fit in memory).
-    /// For large files, we read from the mmap on demand.
-    utf8_text: Option<String>,
-    /// BOM length in bytes (for future save support).
-    #[allow(dead_code)]
+    /// BOM length in bytes.
     bom_len: usize,
 }
 
 impl ViewportManager {
-    /// Create a new viewport manager for a document.
-    /// `raw_bytes` is the mmap'd file content.
-    /// `file_name` is the display name of the file.
-    pub fn new(raw_bytes: &[u8], file_size: u64, file_name: String) -> Self {
-        // Detect encoding
-        let encoding_info = detect(raw_bytes, 64 * 1024); // Scan first 64KB for detection
-
-        // Detect BOM length
-        let bom_len = detect_bom_len(raw_bytes);
-
-        // For Phase 1, convert the entire file to UTF-8 upfront.
-        // For very large files, this will be replaced with on-demand conversion
-        // in the Piece Table phase.
-        let utf8_text = convert_to_utf8(raw_bytes, &encoding_info.encoding, bom_len);
-
-        // Build line index on the UTF-8 text
-        let line_index = LineIndex::new(utf8_text.as_bytes(), utf8_text.len() as u64);
-
-        // Build full index for now (Phase 1 simplicity)
-        let mut line_index = line_index;
-        line_index.build_full(utf8_text.as_bytes());
-
+    /// Create a new viewport manager from pre-built components.
+    pub fn new(
+        line_index: LineIndex,
+        encoding_info: EncodingInfo,
+        file_size: u64,
+        file_name: String,
+        bom_len: usize,
+    ) -> Self {
         Self {
             line_index,
             encoding_info,
             file_size,
             file_name,
-            utf8_text: Some(utf8_text),
             bom_len,
         }
     }
 
     /// Get a viewport of lines starting from `start_line`.
-    pub fn get_viewport(&self, start_line: u64, line_count: u32) -> ViewportData {
-        let lines = if let Some(text) = &self.utf8_text {
-            self.line_index.get_lines(text.as_bytes(), start_line, line_count)
-        } else {
-            Vec::new()
-        };
+    /// `text_bytes` is the current UTF-8 content from PieceTable.
+    pub fn get_viewport(&self, text_bytes: &[u8], start_line: u64, line_count: u32) -> ViewportData {
+        let lines = self.line_index.get_lines(text_bytes, start_line, line_count);
 
         let line_ending_str = match self.encoding_info.line_ending {
             LineEnding::LF => "LF",
@@ -105,6 +86,13 @@ impl ViewportManager {
         }
     }
 
+    /// Rebuild the line index from the given text bytes.
+    /// Called after edits to keep the line index in sync.
+    pub fn rebuild_line_index(&mut self, text_bytes: &[u8]) {
+        self.line_index = LineIndex::new(text_bytes, text_bytes.len() as u64);
+        self.line_index.build_full(text_bytes);
+    }
+
     /// Get the total line count.
     pub fn total_lines(&self) -> u64 {
         self.line_index.total_lines()
@@ -119,9 +107,19 @@ impl ViewportManager {
     pub fn file_name(&self) -> String {
         self.file_name.clone()
     }
+
+    /// Get the BOM length.
+    pub fn bom_len(&self) -> usize {
+        self.bom_len
+    }
+
+    /// Get the encoding info.
+    pub fn encoding_info(&self) -> &EncodingInfo {
+        &self.encoding_info
+    }
 }
 
-fn detect_bom_len(bytes: &[u8]) -> usize {
+pub fn detect_bom_len(bytes: &[u8]) -> usize {
     if bytes.len() >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF {
         return 3;
     }

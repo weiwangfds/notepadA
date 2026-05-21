@@ -48,6 +48,7 @@ body {
   /* Lines */
   --line-hover: rgba(0, 0, 0, 0.03);
   --line-active: rgba(0, 122, 204, 0.08);
+  --selection-bg: rgba(0, 122, 204, 0.2);
 
   /* Cursor */
   --cursor-color: #1e1e1e;
@@ -87,6 +88,7 @@ body {
 
   --line-hover: rgba(255, 255, 255, 0.03);
   --line-active: rgba(59, 130, 246, 0.12);
+  --selection-bg: rgba(59, 130, 246, 0.25);
 
   --cursor-color: #d4d4d4;
 

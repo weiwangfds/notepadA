@@ -5,8 +5,11 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use uuid::Uuid;
 
+use crate::buffer::line_index::LineIndex;
+use crate::buffer::piece_table::PieceTable;
+use crate::file::encoding::{convert_to_utf8, detect};
 use crate::file::mapper::FileMapper;
-use crate::viewport::manager::ViewportManager;
+use crate::viewport::manager::{detect_bom_len, ViewportManager};
 
 /// Represents an open document (tab).
 pub struct Document {
@@ -17,10 +20,31 @@ pub struct Document {
     /// The mmap'd file reader. Kept alive so the mmap mapping persists.
     #[allow(dead_code)]
     pub mapper: FileMapper,
+    /// Piece Table for editing support.
+    pub piece_table: PieceTable,
     /// The viewport manager for this document.
     pub viewport: ViewportManager,
     /// Whether the document has unsaved edits.
     pub dirty: bool,
+}
+
+impl Document {
+    /// Get the current UTF-8 content from the piece table.
+    pub fn content_bytes(&self) -> Vec<u8> {
+        self.piece_table.to_bytes()
+    }
+
+    /// Get the current content as a string.
+    pub fn content_string(&self) -> String {
+        self.piece_table.to_string_lossy()
+    }
+
+    /// After an edit, rebuild the line index to reflect the new content.
+    pub fn rebuild_after_edit(&mut self) {
+        let bytes = self.piece_table.to_bytes();
+        self.viewport.rebuild_line_index(&bytes);
+        self.dirty = true;
+    }
 }
 
 /// Global application state shared across all Tauri commands.
@@ -51,7 +75,28 @@ impl AppState {
         let raw_bytes = mapper.as_bytes();
         let file_size = mapper.file_size();
 
-        let viewport = ViewportManager::new(raw_bytes, file_size, file_name.clone());
+        // Detect encoding
+        let encoding_info = detect(raw_bytes, 64 * 1024);
+        let bom_len = detect_bom_len(raw_bytes);
+
+        // Convert to UTF-8
+        let utf8_text = convert_to_utf8(raw_bytes, &encoding_info.encoding, bom_len);
+
+        // Build line index
+        let mut line_index = LineIndex::new(utf8_text.as_bytes(), utf8_text.len() as u64);
+        line_index.build_full(utf8_text.as_bytes());
+
+        // Create piece table with the UTF-8 content
+        let piece_table = PieceTable::new(utf8_text.into_bytes());
+
+        // Create viewport manager
+        let viewport = ViewportManager::new(
+            line_index,
+            encoding_info,
+            file_size,
+            file_name,
+            bom_len,
+        );
 
         let tab_id = Uuid::new_v4().to_string();
 
@@ -59,6 +104,7 @@ impl AppState {
             id: tab_id.clone(),
             path: path.to_path_buf(),
             mapper,
+            piece_table,
             viewport,
             dirty: false,
         };

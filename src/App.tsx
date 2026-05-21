@@ -18,6 +18,12 @@ function App() {
     switchTab,
     requestViewport,
     setCursor,
+    handleInsertText,
+    handleDeleteRange,
+    handleSave,
+    handleSaveAs,
+    handleUndo,
+    handleRedo,
   } = useEditor();
 
   // Auto-open file if specified in URL hash (e.g., #file=/tmp/test.txt)
@@ -42,7 +48,13 @@ function App() {
 
   return (
     <div className="app-root">
-      <MenuBar onOpenFile={openFile} />
+      <MenuBar
+        onOpenFile={openFile}
+        onSave={handleSave}
+        onSaveAs={handleSaveAs}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+      />
       <TabBar
         tabs={tabs}
         activeTabId={activeTabId}
@@ -61,6 +73,8 @@ function App() {
             cursor={cursor}
             onScroll={handleScroll}
             onCursorChange={setCursor}
+            onInsertText={handleInsertText}
+            onDeleteRange={handleDeleteRange}
           />
         ) : (
           <div className="editor-container">
