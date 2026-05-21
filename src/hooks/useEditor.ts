@@ -18,6 +18,10 @@ export function useEditor() {
   const [canRedo, setCanRedo] = useState(false);
   const [showGotoDialog, setShowGotoDialog] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check system preference or saved setting
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
   const [searchResults, setSearchResults] = useState<SearchMatch[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -214,6 +218,27 @@ export function useEditor() {
     }
   }, [activeTabId]);
 
+  // ─── Theme toggle ──────────────────────────────────────────
+
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      return next;
+    });
+  }, []);
+
+  // Apply initial theme
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Search operations ─────────────────────────────────────
 
   const handleSearch = useCallback(async (query: string, options: SearchOptions) => {
@@ -369,6 +394,8 @@ export function useEditor() {
     showSearchBar,
     searchResults,
     currentMatchIndex,
+    darkMode,
+    toggleDarkMode,
     openFile,
     closeTab,
     switchTab,

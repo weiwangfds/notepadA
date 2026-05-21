@@ -38,6 +38,8 @@ function App() {
     handleReplaceAll,
     closeGotoDialog,
     closeSearchBar,
+    darkMode,
+    toggleDarkMode,
   } = useEditor();
 
   // Auto-open file if specified in URL hash
@@ -59,6 +61,25 @@ function App() {
     }
   };
 
+  // Drag-drop: handle file drops on the editor
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0] as File & { path?: string };
+      const filePath = file.path;
+      if (filePath) {
+        openFile(filePath);
+      }
+    }
+  };
+
   return (
     <div className="app-root">
       <MenuBar
@@ -67,6 +88,8 @@ function App() {
         onSaveAs={handleSaveAs}
         onUndo={handleUndo}
         onRedo={handleRedo}
+        darkMode={darkMode}
+        onToggleTheme={toggleDarkMode}
       />
       <TabBar
         tabs={tabs}
@@ -79,7 +102,7 @@ function App() {
         <div className="error-bar">{error}</div>
       )}
 
-      <div className="editor-wrapper">
+      <div className="editor-wrapper" onDragOver={handleDragOver} onDrop={handleDrop}>
         {viewport ? (
           <>
             <EditorView

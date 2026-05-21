@@ -54,6 +54,11 @@
   cursor: default;
 }
 
+.menubar-theme-btn {
+  font-size: 16px;
+  cursor: pointer;
+}
+
 .menubar-item-disabled {
   opacity: 0.4;
   pointer-events: none;
