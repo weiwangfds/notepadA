@@ -56,6 +56,21 @@ export interface EditResult {
   can_redo: boolean;
 }
 
+/** A search match result */
+export interface SearchMatch {
+  line: number;
+  col: number;
+  length: number;
+  text: string;
+}
+
+/** Search options */
+export interface SearchOptions {
+  case_sensitive: boolean;
+  whole_word: boolean;
+  regex: boolean;
+}
+
 /** Format byte size to human-readable string */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";

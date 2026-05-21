@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import * as api from "../services/tauriApi";
-import type { ViewportData, TabInfo, CursorPosition, EditResult } from "../types/editor";
+import type { ViewportData, TabInfo, CursorPosition, EditResult, SearchMatch, SearchOptions } from "../types/editor";
 
 /** Number of visible lines in the viewport */
 const VIEWPORT_LINES = 80;
@@ -17,6 +17,11 @@ export function useEditor() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [showGotoDialog, setShowGotoDialog] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchMatch[]>([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOptions, setSearchOptions] = useState<SearchOptions>({ case_sensitive: false, whole_word: false, regex: false });
 
   // Throttle viewport requests
   const pendingRequest = useRef<number | null>(null);
@@ -209,6 +214,84 @@ export function useEditor() {
     }
   }, [activeTabId]);
 
+  // ─── Search operations ─────────────────────────────────────
+
+  const handleSearch = useCallback(async (query: string, options: SearchOptions) => {
+    if (!activeTabId || !query) {
+      setSearchResults([]);
+      setCurrentMatchIndex(0);
+      return;
+    }
+    try {
+      setSearchQuery(query);
+      setSearchOptions(options);
+      const results = await api.searchQuery(activeTabId, query, options);
+      setSearchResults(results);
+      setCurrentMatchIndex(results.length > 0 ? 0 : -1);
+      // Navigate to first match
+      if (results.length > 0) {
+        const m = results[0];
+        await loadViewport(activeTabId, m.line);
+        setCursor({ line: m.line, column: m.col });
+      }
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, loadViewport, setCursor]);
+
+  const handleSearchNext = useCallback(async () => {
+    if (!activeTabId || searchResults.length === 0) return;
+    const nextIdx = (currentMatchIndex + 1) % searchResults.length;
+    setCurrentMatchIndex(nextIdx);
+    const m = searchResults[nextIdx];
+    await loadViewport(activeTabId, m.line);
+    setCursor({ line: m.line, column: m.col });
+  }, [activeTabId, searchResults, currentMatchIndex, loadViewport, setCursor]);
+
+  const handleSearchPrev = useCallback(async () => {
+    if (!activeTabId || searchResults.length === 0) return;
+    const prevIdx = (currentMatchIndex - 1 + searchResults.length) % searchResults.length;
+    setCurrentMatchIndex(prevIdx);
+    const m = searchResults[prevIdx];
+    await loadViewport(activeTabId, m.line);
+    setCursor({ line: m.line, column: m.col });
+  }, [activeTabId, searchResults, currentMatchIndex, loadViewport, setCursor]);
+
+  const handleReplace = useCallback(async (replacement: string) => {
+    if (!activeTabId || searchResults.length === 0) return;
+    try {
+      // Replace the current match
+      const m = searchResults[currentMatchIndex];
+      await api.replaceRange(activeTabId, m.line, m.col, m.line, m.col + m.length, replacement);
+      // Re-search
+      const results = await api.searchQuery(activeTabId, searchQuery, searchOptions);
+      setSearchResults(results);
+      if (results.length > 0) {
+        const nextIdx = Math.min(currentMatchIndex, results.length - 1);
+        setCurrentMatchIndex(nextIdx);
+        const nm = results[nextIdx];
+        await loadViewport(activeTabId, nm.line);
+        setCursor({ line: nm.line, column: nm.col });
+      }
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, searchResults, currentMatchIndex, searchQuery, searchOptions, loadViewport, setCursor]);
+
+  const handleReplaceAll = useCallback(async (replacement: string) => {
+    if (!activeTabId || !searchQuery) return;
+    try {
+      const count = await api.replaceAll(activeTabId, searchQuery, replacement, searchOptions);
+      setSearchResults([]);
+      setCurrentMatchIndex(0);
+      // Refresh viewport
+      await loadViewport(activeTabId, cursor.line);
+      alert(`Replaced ${count} occurrences`);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [activeTabId, searchQuery, searchOptions, cursor.line, loadViewport]);
+
   // ─── Keyboard shortcuts ───────────────────────────────────
 
   useEffect(() => {
@@ -222,6 +305,21 @@ export function useEditor() {
       if ((e.metaKey || e.ctrlKey) && e.key === "g") {
         e.preventDefault();
         setShowGotoDialog(true);
+      }
+      // Cmd/Ctrl + F: Search
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+        e.preventDefault();
+        setShowSearchBar(true);
+      }
+      // Cmd/Ctrl + H: Search & Replace
+      if ((e.metaKey || e.ctrlKey) && e.key === "h") {
+        e.preventDefault();
+        setShowSearchBar(true);
+      }
+      // Escape: Close search/goto
+      if (e.key === "Escape") {
+        setShowSearchBar(false);
+        setShowGotoDialog(false);
       }
       // Cmd/Ctrl + W: Close tab
       if ((e.metaKey || e.ctrlKey) && e.key === "w") {
@@ -268,6 +366,9 @@ export function useEditor() {
     canRedo,
     showGotoDialog,
     closeGotoDialog: () => setShowGotoDialog(false),
+    showSearchBar,
+    searchResults,
+    currentMatchIndex,
     openFile,
     closeTab,
     switchTab,
@@ -281,5 +382,11 @@ export function useEditor() {
     handleRedo,
     handleSave,
     handleSaveAs,
+    handleSearch,
+    handleSearchNext,
+    handleSearchPrev,
+    handleReplace,
+    handleReplaceAll,
+    closeSearchBar: () => setShowSearchBar(false),
   };
 }

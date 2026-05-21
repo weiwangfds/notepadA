@@ -44,3 +44,6 @@ uuid = { version = "1", features = ["v4", "serde"] }
 
 # Sync primitives
 parking_lot = "0.12"
+
+# Regular expressions
+regex = "1"

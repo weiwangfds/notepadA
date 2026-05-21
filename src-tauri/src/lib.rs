@@ -2,6 +2,7 @@ pub mod app_state;
 pub mod buffer;
 pub mod commands;
 pub mod file;
+pub mod search;
 pub mod viewport;
 
 use app_state::AppState;
@@ -36,6 +37,9 @@ pub fn run() {
             commands::edit_cmds::replace_range,
             commands::edit_cmds::undo,
             commands::edit_cmds::redo,
+            commands::search_cmds::search,
+            commands::search_cmds::search_next,
+            commands::search_cmds::replace_all,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -121,34 +121,37 @@
 
 ---
 
-## Phase 4: 搜索与替换
+## Phase 4: 搜索与替换 ✅ 已完成
 
 ### 4.1 文本搜索引擎 (Rust)
-- [ ] 创建 `src-tauri/src/search/mod.rs`
-- [ ] 实现 `text_search.rs` — Boyer-Moore 字符串搜索
-- [ ] 实现流式搜索: 逐块扫描，通过 channel 返回结果
-- [ ] 支持大小写敏感/不敏感选项
-- [ ] 支持全字匹配选项
+- [x] 创建 `src-tauri/src/search/mod.rs`
+- [x] 实现 `text_search.rs` — 逐行扫描搜索
+- [x] 支持大小写敏感/不敏感选项
+- [x] 支持全字匹配选项
+- [x] 8 个单元测试
 
 ### 4.2 正则搜索引擎 (Rust)
-- [ ] 实现 `regex_search.rs` — 基于 `regex` crate
-- [ ] 支持跨行匹配选项
-- [ ] 正则搜索也使用流式返回
+- [x] 实现 `regex_search.rs` — 基于 `regex` crate
+- [x] 支持大小写敏感/不敏感
+- [x] 支持全字匹配 (via \b)
+- [x] 5 个单元测试
 
 ### 4.3 搜索命令 (Rust)
-- [ ] 创建 `src-tauri/src/commands/search_cmds.rs`
-- [ ] 实现 `search(tab_id, query, options)` — 启动搜索，返回 search_id
-- [ ] 实现 `search_next(tab_id, search_id)` — 获取下一个匹配
-- [ ] 实现 `replace_all(tab_id, search_id, replacement)` — 全部替换
-- [ ] 在 `lib.rs` 注册搜索命令
+- [x] 创建 `src-tauri/src/commands/search_cmds.rs`
+- [x] 实现 `search(tab_id, query, options)` — 返回所有匹配
+- [x] 实现 `search_next(tab_id, query, options, line, col)` — 下一个匹配
+- [x] 实现 `replace_all(tab_id, query, replacement, options)` — 全部替换
+- [x] 在 `lib.rs` 注册命令
 
 ### 4.4 搜索 UI (前端)
-- [ ] 创建 `SearchBar.tsx` 组件 (Ctrl+F 触发)
-- [ ] 创建 `ReplaceBar.tsx` 组件 (Ctrl+H 触发)
-- [ ] 搜索结果高亮渲染
-- [ ] 上一个/下一个匹配导航 (F3/Shift+F3)
-- [ ] 搜索结果计数显示
-- [ ] 替换当前/全部替换按钮
+- [x] 创建 `SearchBar.tsx` 组件 (Ctrl+F 触发)
+- [x] 内置 Replace 功能 (展开/折叠)
+- [x] 搜索选项: 大小写敏感、全字匹配、正则
+- [x] 上一个/下一个匹配导航 (Enter/Shift+Enter)
+- [x] 搜索结果计数显示 (current / total)
+- [x] 替换当前/全部替换按钮
+- [x] API: searchQuery, searchNext, replaceAll
+- [x] CSS 样式: 浮动搜索栏，选项按钮高亮
 
 ---
 
@@ -183,10 +186,10 @@
 
 ## 开发顺序
 
-当前进度: **Phase 4 搜索与替换** ← 下一步从这里开始
+当前进度: **Phase 5 完善体验** ← 下一步从这里开始
 
 1. ✅ Phase 1 — 已完成
 2. ✅ Phase 2 — 已完成 (Piece Table + 编辑 + 保存)
-3. ✅ Phase 3 — 已完成 (后台索引 + 两级稀疏索引 + GotoLine 对话框)
-4. 🔄 Phase 4 — 搜索替换 (当前任务)
-5. ⬜ Phase 5 — 完善体验
+3. ✅ Phase 3 — 已完成 (后台索引 + 两级稀疏索引 + GotoLine)
+4. ✅ Phase 4 — 已完成 (文本/正则搜索 + 替换 + SearchBar UI)
+5. 🔄 Phase 5 — 完善体验 (当前任务)

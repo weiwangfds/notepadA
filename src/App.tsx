@@ -5,6 +5,7 @@ import TabBar from "./components/TabBar/TabBar";
 import EditorView from "./components/Editor/EditorView";
 import StatusBar from "./components/StatusBar/StatusBar";
 import GotoLineDialog from "./components/Dialogs/GotoLineDialog";
+import SearchBar from "./components/Search/SearchBar";
 
 function App() {
   const {
@@ -15,7 +16,9 @@ function App() {
     loading,
     error,
     showGotoDialog,
-    closeGotoDialog,
+    showSearchBar,
+    searchResults,
+    currentMatchIndex,
     openFile,
     closeTab,
     switchTab,
@@ -28,9 +31,16 @@ function App() {
     handleSaveAs,
     handleUndo,
     handleRedo,
+    handleSearch,
+    handleSearchNext,
+    handleSearchPrev,
+    handleReplace,
+    handleReplaceAll,
+    closeGotoDialog,
+    closeSearchBar,
   } = useEditor();
 
-  // Auto-open file if specified in URL hash (e.g., #file=/tmp/test.txt)
+  // Auto-open file if specified in URL hash
   const autoOpenDone = useRef(false);
   useEffect(() => {
     if (autoOpenDone.current) return;
@@ -71,14 +81,28 @@ function App() {
 
       <div className="editor-wrapper">
         {viewport ? (
-          <EditorView
-            viewport={viewport}
-            cursor={cursor}
-            onScroll={handleScroll}
-            onCursorChange={setCursor}
-            onInsertText={handleInsertText}
-            onDeleteRange={handleDeleteRange}
-          />
+          <>
+            <EditorView
+              viewport={viewport}
+              cursor={cursor}
+              onScroll={handleScroll}
+              onCursorChange={setCursor}
+              onInsertText={handleInsertText}
+              onDeleteRange={handleDeleteRange}
+            />
+            {showSearchBar && (
+              <SearchBar
+                onSearch={handleSearch}
+                onNext={handleSearchNext}
+                onPrev={handleSearchPrev}
+                onReplace={handleReplace}
+                onReplaceAll={handleReplaceAll}
+                onClose={closeSearchBar}
+                matchCount={searchResults.length}
+                currentMatch={currentMatchIndex}
+              />
+            )}
+          </>
         ) : (
           <div className="editor-container">
             <div className="editor-empty">

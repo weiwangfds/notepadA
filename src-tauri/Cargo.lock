@@ -92,6 +92,7 @@ dependencies = [
  "memchr",
  "memmap2",
  "parking_lot",
+ "regex",
  "serde",
  "serde_json",
  "tauri",

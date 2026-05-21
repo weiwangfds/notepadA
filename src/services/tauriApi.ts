@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open as dialogOpen, save as dialogSave } from "@tauri-apps/plugin-dialog";
-import type { OpenFileResult, ViewportData, TabInfo, LineCountInfo, EditResult } from "../types/editor";
+import type { OpenFileResult, ViewportData, TabInfo, LineCountInfo, EditResult, SearchMatch, SearchOptions } from "../types/editor";
 
 export async function openFile(path: string): Promise<OpenFileResult> {
   return invoke<OpenFileResult>("open_file", { path });
@@ -72,6 +72,35 @@ export async function saveFile(tabId: string): Promise<void> {
 
 export async function saveFileAs(tabId: string, path: string): Promise<void> {
   return invoke("save_file_as", { tabId, path });
+}
+
+// ─── Search commands ────────────────────────────────────────
+
+export async function searchQuery(
+  tabId: string,
+  query: string,
+  options: SearchOptions,
+): Promise<SearchMatch[]> {
+  return invoke<SearchMatch[]>("search", { tabId, query, options });
+}
+
+export async function searchNext(
+  tabId: string,
+  query: string,
+  options: SearchOptions,
+  currentLine: number,
+  currentCol: number,
+): Promise<SearchMatch | null> {
+  return invoke<SearchMatch | null>("search_next", { tabId, query, options, currentLine, currentCol });
+}
+
+export async function replaceAll(
+  tabId: string,
+  query: string,
+  replacement: string,
+  options: SearchOptions,
+): Promise<number> {
+  return invoke<number>("replace_all", { tabId, query, replacement, options });
 }
 
 // ─── Dialogs ────────────────────────────────────────────────
