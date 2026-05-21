@@ -1,0 +1,284 @@
+/* NotePadA Editor Styles */
+
+/* ===== Layout ===== */
+
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: var(--editor-bg);
+  color: var(--editor-fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.editor-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== Menu Bar ===== */
+
+.menubar {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 8px;
+  background: var(--menubar-bg);
+  border-bottom: 1px solid var(--border-color);
+  -webkit-app-region: drag;
+}
+
+.menubar-item {
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--editor-fg);
+  font-size: 13px;
+  -webkit-app-region: no-drag;
+}
+
+.menubar-item:hover {
+  background: var(--menubar-hover);
+}
+
+.menubar-item-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ===== Tab Bar ===== */
+
+.tabbar {
+  display: flex;
+  align-items: center;
+  height: 35px;
+  background: var(--tabbar-bg);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tabbar-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--tab-fg);
+  cursor: pointer;
+  border-right: 1px solid var(--border-color);
+  white-space: nowrap;
+  min-width: 100px;
+  max-width: 200px;
+  transition: background 0.1s;
+}
+
+.tabbar-tab:hover {
+  background: var(--tab-hover);
+}
+
+.tabbar-tab-active {
+  background: var(--editor-bg);
+  color: var(--editor-fg);
+  border-bottom: 2px solid var(--accent);
+}
+
+.tabbar-tab-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabbar-tab-close {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.tabbar-tab-close:hover {
+  opacity: 1;
+  background: var(--tab-close-hover);
+}
+
+/* ===== Editor Container ===== */
+
+.editor-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  background: var(--editor-bg);
+}
+
+.editor-container::-webkit-scrollbar {
+  display: none;
+}
+
+.editor-content {
+  position: relative;
+  min-width: 100%;
+}
+
+/* ===== Gutter (Line Numbers) ===== */
+
+.editor-gutter {
+  background: var(--gutter-bg);
+  border-right: 1px solid var(--border-color);
+}
+
+.editor-line-number {
+  text-align: right;
+  padding-right: 12px;
+  color: var(--gutter-fg);
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+  font-size: 12px;
+  user-select: none;
+}
+
+/* ===== Text Lines ===== */
+
+.editor-text {
+  overflow: hidden;
+}
+
+.editor-line {
+  padding: 0 16px 0 12px;
+  white-space: pre;
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+  font-size: 13px;
+  cursor: text;
+}
+
+.editor-line:hover {
+  background: var(--line-hover);
+}
+
+.editor-line-active {
+  background: var(--line-active);
+}
+
+.editor-line-text {
+  /* Ensure consistent character width */
+  font-variant-ligatures: none;
+}
+
+/* ===== Cursor ===== */
+
+.editor-cursor {
+  width: 2px;
+  background: var(--cursor-color);
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ===== Custom Scrollbar ===== */
+
+.editor-scrollbar-track {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: transparent;
+  z-index: 10;
+}
+
+.editor-scrollbar-thumb {
+  position: absolute;
+  left: 2px;
+  width: 6px;
+  border-radius: 3px;
+  background: var(--scrollbar-thumb);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.editor-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ===== Status Bar ===== */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--statusbar-bg);
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--statusbar-fg);
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.statusbar-item {
+  white-space: nowrap;
+}
+
+.statusbar-loading {
+  color: var(--accent);
+}
+
+/* ===== Empty State ===== */
+
+.editor-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: var(--empty-fg);
+}
+
+.editor-empty-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+
+.editor-empty-text {
+  font-size: 20px;
+  font-weight: 600;
+  opacity: 0.5;
+}
+
+.editor-empty-hint {
+  font-size: 13px;
+  opacity: 0.3;
+}
+
+.editor-empty-hint kbd {
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+/* ===== Error Bar ===== */
+
+.error-bar {
+  padding: 6px 12px;
+  background: #fdd;
+  color: #c00;
+  font-size: 12px;
+  border-bottom: 1px solid #faa;
+}
