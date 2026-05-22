@@ -11,14 +11,11 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@heroui/react": "^3.0.5",
-    "@heroui/styles": "^3.0.5",
     "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {

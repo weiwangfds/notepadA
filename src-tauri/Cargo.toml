@@ -24,7 +24,6 @@ log = "0.4"
 tauri = { version = "2.11.2", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
 
 # Memory-mapped file I/O
 memmap2 = "0.9"
